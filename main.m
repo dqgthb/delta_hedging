@@ -28,15 +28,18 @@
 %                   - Gamma and moneyness over
 %                   - Vega vixT over time
 
-% switch variables
-question = 1;
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%% switch variables %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-isVolConst = true;
-constVol = 0.2;
-isRfConst = true;
-constRf = 0.05;
+question = 2
+isVolConst = false
+constVol = 0.2
+isRfConst = true
+constRf = 0.05
 
-isPlotOn = true;
+isPlotOn = true
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 % read data and add dates
 vixT = readtable("vix.csv");
@@ -44,6 +47,7 @@ vixT.datenum = datenum(vixT.Date);
 vixT.year = year(vixT.datenum);
 vixT.month = month(vixT.datenum);
 vixT.day = day(vixT.datenum);
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 if question == 1
 startDate = datenum('1997-01-02');
@@ -62,9 +66,15 @@ else
 end
 
 if isVolConst
-    vixT.sigma = ones(length(vixT.sigma), 1)*constVol;
+    vixT.sigma = ones(length(vixT.sigma), 1) * constVol;
 end
 
+if isRfConst
+    vix.r = ones(length(vixT.sigma), 1) * constRf;
+end
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 vixExt = vixT(vixT.datenum >= startDate & vixT.datenum <= endDate,:);
 len = length(vixExt.datenum);
@@ -74,13 +84,13 @@ vixExt.delta = NaN(len, 1);
 vixExt.gamma = NaN(len,1);
 vixExt.vega = NaN(len,1);
 vixExt.moneyness = NaN(len,1);
-
 vixExt.cash = NaN(len, 1);
 vixExt.hedgePortValue = NaN(len, 1);
 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
+% markup-adjusted price
 blsPriceMarkup = blsprice(vixExt.sp500(1),strike,vixExt.r(1), vixExt.TimeToMaturity(1)/365, markup * vixExt.sigma(1)); % start from here next time
-
 % Getting the call price and changes in value
 for i = 1 : len
     vixExt.blsPrice(i) = blsprice(vixExt.sp500(i),strike,vixExt.r(i), vixExt.TimeToMaturity(i)/365, vixExt.sigma(i)); % start from here next time
@@ -90,30 +100,29 @@ for i = 1 : len
     vixExt.moneyness(i) = vixExt.sp500(i)/strike;
 end
 
-%vixExt.cash(1) = vixExt.blsPrice(1) - vixExt.delta(1)*vixExt.sp500(1);
+% cash
 vixExt.cash(1) = blsPriceMarkup - vixExt.delta(1)*vixExt.sp500(1);
 for i = 2 : len
     timeStep = vixExt.datenum(i) - vixExt.datenum(i-1);
     vixExt.cash(i) = vixExt.cash(i-1)*exp(vixExt.r(i-1) * timeStep/365) - (vixExt.delta(i) - vixExt.delta(i-1))*vixExt.sp500(i);
 end
 
+% Hedge Portfolio Value
 for i = 1: len
     vixExt.hedgePortValue(i) = vixExt.cash(i) + vixExt.delta(i)*vixExt.sp500(i);
 end
 
+% Prepare ltcm table
 ltcm = table(vixExt.datenum, 'VariableNames', {'datenum'});
 ltcm.hedgePL = vixExt.hedgePortValue - vixExt.hedgePortValue(1);
 ltcm.clientPL = vixExt.blsPrice - vixExt.blsPrice(1);
 ltcm.netPortfolioValue = ltcm.hedgePL - ltcm.clientPL;
 
-vixExt(1:3,:)
-ltcm(1:3,:)
-
+% Show 4 plots 2x2
 if isPlotOn
-    figure
     subplot(2,2,1);
-    plot(vixExt.datenum, ltcm.clientPL)
     hold on
+    plot(vixExt.datenum, ltcm.clientPL)
     plot(vixExt.datenum, ltcm.hedgePL)
     plot(vixExt.datenum, ltcm.netPortfolioValue)
     title("PLs and Net Portfolio Value")
