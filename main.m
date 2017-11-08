@@ -36,9 +36,7 @@ constVol = 0.2;
 isRfConst = true;
 constRf = 0.05;
 
-plotsOn = false;
-subplotsOn = false;
-cusSubplotOn = true;
+isPlotOn = true;
 
 % read data and add dates
 vixT = readtable("vix.csv");
@@ -111,95 +109,7 @@ ltcm.netPortfolioValue = ltcm.hedgePL - ltcm.clientPL;
 vixExt(1:3,:)
 ltcm(1:3,:)
 
-% since creating plots takes some time, I'll make a switch to turn it on and off.
-if plotsOn
-    plot(vixExt.datenum, ltcm.clientPL)
-    hold on
-    plot(vixExt.datenum, ltcm.hedgePL)
-    plot(vixExt.datenum, ltcm.netPortfolioValue)
-    datetick('x', 'yyyymmdd')
-
-    % plot 2
-    figure
-    yyaxis left
-    plot(vixExt.datenum, vixExt.delta)
-    yyaxis right
-    plot(vixExt.datenum, vixExt.sp500)
-    datetick('x', 'yyyymmdd')
-
-    % plot 3
-    figure
-    yyaxis left
-    plot(vixExt.datenum, vixExt.gamma)
-    yyaxis right
-    plot(vixExt.datenum, vixExt.moneyness)
-    datetick('x', 'yyyymmdd')
-
-    % plot 4
-    figure
-    yyaxis left
-    plot(vixExt.datenum, vixExt.vega)
-    yyaxis right
-    plot(vixExt.datenum, vixExt.sigma)
-    datetick('x', 'yyyymmdd')
-
-    % plot 5 (custom)
-    %figure
-    %plot(vixExt.datenum, ltcm.hedgePL)
-    %hold on
-    %plot(vixExt.datenum, vixExt.sp500)
-
-    % plot(vixExt.datenum, vixExt.moneyness)
-end
-
-if subplotsOn
-    subplot(2,2,1);
-    plot(vixExt.datenum, ltcm.clientPL)
-    hold on
-    plot(vixExt.datenum, ltcm.hedgePL)
-    plot(vixExt.datenum, ltcm.netPortfolioValue)
-    title("PLs and Net Portfolio Value")
-    legend('client PL', 'hedge PL', 'Net Portfolio Value');
-    numTicks = 12;
-    set(gca, 'XTick', linspace(vixExt.datenum(1), vixExt.datenum(end), numTicks));
-    datetick('x', 'yyyy-mm-dd', 'keepticks');
-
-    subplot(2,2,2);
-    yyaxis left
-    plot(vixExt.datenum, vixExt.delta)
-    yyaxis right
-    plot(vixExt.datenum, vixExt.sp500)
-    title('delta and sp500')
-    legend('delta', 'sp500')
-    numTicks = 12;
-    set(gca, 'XTick', linspace(vixExt.datenum(1), vixExt.datenum(end), numTicks));
-    datetick('x', 'yyyy-mm-dd', 'keepticks');
-
-    subplot(2,2,3);
-    yyaxis left
-    plot(vixExt.datenum, vixExt.gamma)
-    yyaxis right
-    plot(vixExt.datenum, vixExt.moneyness)
-    title('gamma and moneyness')
-    legend('gamma', 'moneyness')
-    numTicks = 12;
-    set(gca, 'XTick', linspace(vixExt.datenum(1), vixExt.datenum(end), numTicks));
-    datetick('x', 'yyyy-mm-dd', 'keepticks');
-
-    subplot(2,2,4);
-    yyaxis left
-    plot(vixExt.datenum, vixExt.vega)
-    yyaxis right
-    plot(vixExt.datenum, vixExt.sigma)
-    title('vega and sigma')
-    legend('vega', 'sigma')
-    numTicks = 12;
-    set(gca, 'XTick', linspace(vixExt.datenum(1), vixExt.datenum(end), numTicks));
-    datetick('x', 'yyyy-mm-dd', 'keepticks');
-
-end
-
-if cusSubplotOn
+if isPlotOn
     figure
     subplot(2,2,1);
     plot(vixExt.datenum, ltcm.clientPL)
