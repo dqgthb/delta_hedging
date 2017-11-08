@@ -30,9 +30,15 @@
 
 % switch variables
 question = 1;
-constVol = true;
+
+isVolConst = true;
+constVol = 0.2;
+isRfConst = true;
+constRf = 0.05;
+
 plotsOn = false;
-subplotsOn = true;
+subplotsOn = false;
+cusSubplotOn = true;
 
 % read data and add dates
 vixT = readtable("vix.csv");
@@ -57,8 +63,8 @@ else
     disp("which question?");
 end
 
-if constVol
-    vixT.sigma = ones(length(vixT.sigma), 1)*0.2;
+if isVolConst
+    vixT.sigma = ones(length(vixT.sigma), 1)*constVol;
 end
 
 
@@ -147,38 +153,87 @@ if plotsOn
 end
 
 if subplotsOn
-    figure
     subplot(2,2,1);
     plot(vixExt.datenum, ltcm.clientPL)
     hold on
     plot(vixExt.datenum, ltcm.hedgePL)
     plot(vixExt.datenum, ltcm.netPortfolioValue)
+    title("PLs and Net Portfolio Value")
     legend('client PL', 'hedge PL', 'Net Portfolio Value');
-    set(gca, 'XTick', 5)
-    datetick('x', 'yyyymmdd')
+    numTicks = 12;
+    set(gca, 'XTick', linspace(vixExt.datenum(1), vixExt.datenum(end), numTicks));
+    datetick('x', 'yyyy-mm-dd', 'keepticks');
 
     subplot(2,2,2);
     yyaxis left
     plot(vixExt.datenum, vixExt.delta)
     yyaxis right
     plot(vixExt.datenum, vixExt.sp500)
-    datetick('x', 'yyyymmdd')
+    title('delta and sp500')
+    legend('delta', 'sp500')
+    numTicks = 12;
+    set(gca, 'XTick', linspace(vixExt.datenum(1), vixExt.datenum(end), numTicks));
+    datetick('x', 'yyyy-mm-dd', 'keepticks');
 
     subplot(2,2,3);
     yyaxis left
     plot(vixExt.datenum, vixExt.gamma)
     yyaxis right
     plot(vixExt.datenum, vixExt.moneyness)
-    datetick('x', 'yyyymmdd')
+    title('gamma and moneyness')
+    legend('gamma', 'moneyness')
+    numTicks = 12;
+    set(gca, 'XTick', linspace(vixExt.datenum(1), vixExt.datenum(end), numTicks));
+    datetick('x', 'yyyy-mm-dd', 'keepticks');
 
     subplot(2,2,4);
     yyaxis left
     plot(vixExt.datenum, vixExt.vega)
     yyaxis right
     plot(vixExt.datenum, vixExt.sigma)
-    datetick('x', 'yyyymmdd')
-
+    title('vega and sigma')
+    legend('vega', 'sigma')
+    numTicks = 12;
+    set(gca, 'XTick', linspace(vixExt.datenum(1), vixExt.datenum(end), numTicks));
+    datetick('x', 'yyyy-mm-dd', 'keepticks');
 
 end
 
+if cusSubplotOn
+    figure
+    subplot(2,2,1);
+    plot(vixExt.datenum, ltcm.clientPL)
+    hold on
+    plot(vixExt.datenum, ltcm.hedgePL)
+    plot(vixExt.datenum, ltcm.netPortfolioValue)
+    title("PLs and Net Portfolio Value")
+    legend('client PL', 'hedge PL', 'Net Portfolio Value');
+    numTicks = 12;
+    set(gca, 'XTick', linspace(vixExt.datenum(1), vixExt.datenum(end), numTicks));
+    datetick('x', 'yyyy-mm-dd', 'keepticks');
 
+    subplot(2,2,2);
+    customPlotyy(vixExt.datenum, vixExt.delta, vixExt.sp500);
+    title('delta and sp500')
+    legend('delta', 'sp500')
+
+    subplot(2,2,3);
+    customPlotyy(vixExt.datenum, vixExt.gamma, vixExt.moneyness);
+    title('gamma and moneyness')
+    legend('gamma', 'moneyness')
+
+    subplot(2,2,4);
+    customPlotyy(vixExt.datenum, vixExt.vega, vixExt.sigma);
+    title('vega and sigma')
+    legend('vega', 'sigma')
+end
+
+function [] = customPlotyy(xaxis, y1axis, y2axis)
+    yyaxis left
+    plot(xaxis, y1axis)
+    yyaxis right
+    plot(xaxis, y2axis)
+    numTicks = 12;
+    set(gca, 'XTick', linspace(xaxis(1), xaxis(end), numTicks));
+    datetick('x', 'yyyy-mm-dd', 'keepticks');
+end
