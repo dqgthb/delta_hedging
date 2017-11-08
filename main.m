@@ -72,8 +72,6 @@ end
 if isRfConst
     vix.r = ones(length(vixT.sigma), 1) * constRf;
 end
-
-
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 vixExt = vixT(vixT.datenum >= startDate & vixT.datenum <= endDate,:);
@@ -86,7 +84,6 @@ vixExt.vega = NaN(len,1);
 vixExt.moneyness = NaN(len,1);
 vixExt.cash = NaN(len, 1);
 vixExt.hedgePortValue = NaN(len, 1);
-
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 % markup-adjusted price
@@ -117,9 +114,11 @@ ltcm = table(vixExt.datenum, 'VariableNames', {'datenum'});
 ltcm.hedgePL = vixExt.hedgePortValue - vixExt.hedgePortValue(1);
 ltcm.clientPL = vixExt.blsPrice - vixExt.blsPrice(1);
 ltcm.netPortfolioValue = ltcm.hedgePL - ltcm.clientPL;
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 % Show 4 plots 2x2
 if isPlotOn
+    figure;
     subplot(2,2,1);
     hold on
     plot(vixExt.datenum, ltcm.clientPL)
@@ -146,6 +145,7 @@ if isPlotOn
     title('vega and sigma')
     legend('vega', 'sigma')
 end
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 function [] = customPlotyy(xaxis, y1axis, y2axis)
     yyaxis left
