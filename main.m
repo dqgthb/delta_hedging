@@ -5,18 +5,18 @@
 %           260630190 Deon Kim
 %           260566889 Jaskrit Singh
 %
-% Last Modified: 2017-10
+% Last Modified: 2017-11-12
 %
 % Course: Applied Quantitative Finance
 %
 % Project: LTCM Delta Hedging Assingment
 %
 % Purpose of the program:
+% Calculate BSM price, delta, gamma, moneyness, cash balance for a call option, in order for LTCM to sell the options at markup-adjusted price and to hedge the risks by replicating the sold option by performing delta hedging
 %
 % Files Used:
 %           vix.csv
 % Inputs:
-%
 %
 % Dataset descriptions:
 %
@@ -31,12 +31,11 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%% switch variables %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
-question = 2
-isVolConst = false
-constVol = 0.2
-isRfConst = true
-constRf = 0.05
+question = 2 % 1 or 2
+isVolConst = 0 % 0 or 1
+constVol = 0.2 % any reasonable value
+isRfConst = 0 % 0 or 1
+constRf = 0.05 % any reasonable value
 
 isPlotOn = true
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -49,6 +48,7 @@ vixT.month = month(vixT.datenum);
 vixT.day = day(vixT.datenum);
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
+% Choose between Q1 and Q2.
 if question == 1
 startDate = datenum('1997-01-02');
 endDate = datenum('1997-12-31');
@@ -65,15 +65,19 @@ else
     disp("which question?");
 end
 
+% make volatility constant if isVolConst = 1
 if isVolConst
     vixT.sigma = ones(length(vixT.sigma), 1) * constVol;
 end
 
+% make risk free constant if isVolConst = 1
 if isRfConst
     vix.r = ones(length(vixT.sigma), 1) * constRf;
 end
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
+% prepare table
+% vix Extract from startDate to endDate
 vixExt = vixT(vixT.datenum >= startDate & vixT.datenum <= endDate,:);
 len = length(vixExt.datenum);
 vixExt.TimeToMaturity = matureDate - vixExt.datenum;
@@ -86,10 +90,10 @@ vixExt.cash = NaN(len, 1);
 vixExt.hedgePortValue = NaN(len, 1);
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-% markup-adjusted price
+% markup-adjusted BSM price
 blsPriceMarkup = blsprice(vixExt.sp500(1),strike,vixExt.r(1), vixExt.TimeToMaturity(1)/365, markup * vixExt.sigma(1)); % start from here next time
-% Getting the call price and changes in value
 for i = 1 : len
+    % calculate bls price, delta, gamma, vega and moneyness for the given date range.
     vixExt.blsPrice(i) = blsprice(vixExt.sp500(i),strike,vixExt.r(i), vixExt.TimeToMaturity(i)/365, vixExt.sigma(i)); % start from here next time
     vixExt.delta(i) = blsdelta(vixExt.sp500(i),strike,vixExt.r(i), vixExt.TimeToMaturity(i)/365, vixExt.sigma(i));
     vixExt.gamma(i) = blsgamma(vixExt.sp500(i),strike,vixExt.r(i), vixExt.TimeToMaturity(i)/365, vixExt.sigma(i));
@@ -97,8 +101,7 @@ for i = 1 : len
     vixExt.moneyness(i) = vixExt.sp500(i)/strike;
 end
 
-% cash
-vixExt.cash(1) = blsPriceMarkup - vixExt.delta(1)*vixExt.sp500(1);
+vixExt.cash(1) = blsPriceMarkup - vixExt.delta(1)*vixExt.sp500(1); % Initial cash
 for i = 2 : len
     timeStep = vixExt.datenum(i) - vixExt.datenum(i-1);
     vixExt.cash(i) = vixExt.cash(i-1)*exp(vixExt.r(i-1) * timeStep/365) - (vixExt.delta(i) - vixExt.delta(i-1))*vixExt.sp500(i);
@@ -109,7 +112,7 @@ for i = 1: len
     vixExt.hedgePortValue(i) = vixExt.cash(i) + vixExt.delta(i)*vixExt.sp500(i);
 end
 
-% Prepare ltcm table
+% Prepare ltcm table for cody
 ltcm = table(vixExt.datenum, 'VariableNames', {'datenum'});
 ltcm.hedgePL = vixExt.hedgePortValue - vixExt.hedgePortValue(1);
 ltcm.clientPL = vixExt.blsPrice - vixExt.blsPrice(1);
@@ -128,7 +131,7 @@ if isPlotOn
     legend('client PL', 'hedge PL', 'Net Portfolio Value');
     numTicks = 12;
     set(gca, 'XTick', linspace(vixExt.datenum(1), vixExt.datenum(end), numTicks));
-    datetick('x', 'yyyy-mm-dd', 'keepticks');
+    datetick('x', 'yymmdd', 'keepticks');
 
     subplot(2,2,2);
     customPlotyy(vixExt.datenum, vixExt.delta, vixExt.sp500);
@@ -147,6 +150,7 @@ if isPlotOn
 end
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
+% plotyy deprecated in MATLAB document, so create a simple customized plot
 function [] = customPlotyy(xaxis, y1axis, y2axis)
     yyaxis left
     plot(xaxis, y1axis)
@@ -154,5 +158,5 @@ function [] = customPlotyy(xaxis, y1axis, y2axis)
     plot(xaxis, y2axis)
     numTicks = 12;
     set(gca, 'XTick', linspace(xaxis(1), xaxis(end), numTicks));
-    datetick('x', 'yyyy-mm-dd', 'keepticks');
+    datetick('x', 'yymmdd', 'keepticks');
 end
